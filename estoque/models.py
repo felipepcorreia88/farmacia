@@ -60,7 +60,8 @@ class MovimentacaoSaida(models.Model):
         choices=[
             ('venda', 'Venda'),
             ('perda', 'Perda'),
-            ('devolucao', 'Devolução')
+            ('doação', 'Doação'),
+            ('brinde', 'Brinde')
         ]
     )
     quantidade = models.PositiveIntegerField()

@@ -16,7 +16,8 @@ class Venda(models.Model):
             ('pix', 'Pix')
         ]
     )
-    observacoes = models.TextField(blank=True)
+    observacoes = models.TextField(blank=True),
+    total = models.DecimalField(decimal_places=2)
 
     def __str__(self):
         return f"Venda #{self.id} - {self.data_hora.strftime('%d/%m/%Y %H:%M')}"
@@ -24,7 +25,8 @@ class Venda(models.Model):
 class ItemVenda(models.Model):
     venda = models.ForeignKey(Venda, on_delete=models.CASCADE)
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
-    quantidade = models.PositiveIntegerField()
+    quantidade = models.PositiveIntegerField(),
+    subtotal = models.DecimalField(decimal_places=2)
 
     def __str__(self):
         return f"{self.quantidade}x {self.produto.nome_comercial} (Venda #{self.venda.id})"
