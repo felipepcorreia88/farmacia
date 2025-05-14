@@ -1,45 +1,45 @@
 from django.db import models
-from pessoa.models import Cliente
+from pessoa.models import Cliente, Funcionario
 from estoque.models import Produto
-from django.contrib.auth.models import User
 
 class Venda(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
-    produtos = models.ManyToManyField(Produto, through='ItemVenda')
-    data_hora = models.DateTimeField(auto_now_add=True)
-    forma_pagamento = models.CharField(
-        max_length=20,
-        choices=[
-            ('dinheiro', 'Dinheiro'),
-            ('credito', 'Cartão de Crédito'),
-            ('debito', 'Cartão de Débito'),
-            ('pix', 'Pix')
-        ]
-    )
-    observacoes = models.TextField(blank=True),
-    total = models.DecimalField(decimal_places=2)
-
+    FORMA_PAGAMENTO_CHOICES = [
+        ('DINHEIRO', 'Dinheiro'),
+        ('CARTAO_CREDITO', 'Cartão de Crédito'),
+        ('CARTAO_DEBITO', 'Cartão de Débito'),
+        ('PIX', 'Pix'),
+        ('BOLETO', 'Boleto'),
+    ]
+    
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.PROTECT)
+    data_venda = models.DateTimeField(auto_now_add=True)
+    forma_pagamento = models.CharField(max_length=20, choices=FORMA_PAGAMENTO_CHOICES)
+    
+    class Meta:
+        verbose_name = 'Venda'
+        verbose_name_plural = 'Vendas'
+    
     def __str__(self):
-        return f"Venda #{self.id} - {self.data_hora.strftime('%d/%m/%Y %H:%M')}"
+        return f"Venda {self.id} - {self.cliente.nome}"
+    
+    @property
+    def valor_total(self):
+        return sum(item.subtotal for item in self.itemvenda_set.all())
 
 class ItemVenda(models.Model):
-    venda = models.ForeignKey(Venda, on_delete=models.CASCADE)
+    venda = models.ForeignKey(Venda, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
-    quantidade = models.PositiveIntegerField(),
-    subtotal = models.DecimalField(decimal_places=2)
-
+    quantidade = models.IntegerField()
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    class Meta:
+        verbose_name = 'Item de Venda'
+        verbose_name_plural = 'Itens de Venda'
+    
     def __str__(self):
-        return f"{self.quantidade}x {self.produto.nome_comercial} (Venda #{self.venda.id})"
-
-class VendaReceita(models.Model):
-    venda = models.OneToOneField(Venda, on_delete=models.CASCADE, primary_key=True)
-    nome_medico = models.CharField(max_length=255)
-    crm_uf = models.CharField(max_length=20, verbose_name="CRM e UF")
-    imagem_receita = models.ImageField(upload_to='receitas/')
-    data_prescricao = models.DateField()
-    medicamento_prescrito = models.TextField()
-    quantidade_prescrita = models.PositiveIntegerField()
-
-    def __str__(self):
-        return f"Receita - Venda #{self.venda.id}"
-
+        return f"{self.quantidade}x {self.produto.nome}"
+    
+    @property
+    def subtotal(self):
+        return self.quantidade * self.preco_unitario

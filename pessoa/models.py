@@ -1,21 +1,43 @@
 from django.db import models
 
-class Fornecedor(models.Model):
-    cnpj = models.CharField(max_length=18, unique=True, verbose_name="CNPJ")
-    razao_social = models.CharField(max_length=255, verbose_name="Razão Social")
-    nome_fantasia = models.CharField(max_length=255, verbose_name="Nome Fantasia")
-    endereco = models.TextField(verbose_name="Endereço")
-
-    def __str__(self):
-        return f"{self.nome_fantasia} ({self.cnpj})"
+class Pessoa(models.Model):
+    nome = models.CharField(max_length=100)
+    cpf = models.CharField(max_length=14, unique=True)
+    data_nascimento = models.DateField()
+    telefone = models.CharField(max_length=15)
+    email = models.EmailField()
+    endereco = models.TextField()
     
-class Cliente(models.Model):
-    nome_completo = models.CharField(max_length=255, verbose_name="Nome Completo")
-    cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")  # Ex: 000.000.000-00
-    telefone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
-    data_nascimento = models.DateField(verbose_name="Data de Nascimento")
-    endereco = models.TextField(verbose_name="Endereço")
+    class Meta:
+        abstract = True
 
+class Cliente(Pessoa):
+    class Meta:
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+    
     def __str__(self):
-        return f"{self.nome_completo} ({self.cpf})"
+        return self.nome
 
+class Cargo(models.Model):
+    nome = models.CharField(max_length=50)
+    descricao = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'Cargo'
+        verbose_name_plural = 'Cargos'
+    
+    def __str__(self):
+        return self.nome
+
+class Funcionario(Pessoa):
+    cargo = models.ForeignKey(Cargo, on_delete=models.PROTECT)
+    data_admissao = models.DateField()
+    salario = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    class Meta:
+        verbose_name = 'Funcionário'
+        verbose_name_plural = 'Funcionários'
+    
+    def __str__(self):
+        return self.nome
